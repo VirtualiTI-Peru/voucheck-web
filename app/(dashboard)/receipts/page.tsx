@@ -1,7 +1,6 @@
-import { fetchReceipts } from '@/lib/webapi';
+import { fetchCustomers } from '@/lib/webapi';
 import { getPortalContext } from '@/lib/portalContext';
 import ReceiptsTable from '@/app/components/ReceiptsTable';
-import { clerkClient } from '@clerk/clerk-sdk-node';
 
 export default async function ReceiptsPage() {
   const ctx = await getPortalContext();
@@ -9,14 +8,15 @@ export default async function ReceiptsPage() {
     return <div className="rounded border bg-white p-4">Acceso denegado.</div>;
   }
 
-  // Fetch organizations server-side
+  // Fetch customers/organizations from backend
   let organizations: { id: string; name: string }[] = [];
-  const orgList = await clerkClient.organizations.getOrganizationList();
-  if (ctx.isSuperAdmin) {
-    organizations = orgList.map((org: any) => ({ id: org.id, name: org.name }));
-  } else {
-    organizations = orgList.filter((org: any) => org.id === ctx.orgId).map((org: any) => ({ id: org.id, name: org.name }));
-  }
+  try {
+    const customers = await fetchCustomers();
+    organizations = customers.map(c => ({ id: c.customerId, name: c.customerName ?? c.customerId }));
+    if (!ctx.isSuperAdmin) {
+      organizations = organizations.filter(o => o.id === ctx.orgId);
+    }
+  } catch { /* leave empty */ }
 
   return (
     <div className="space-y-4">
