@@ -24,9 +24,11 @@ type Org = { id: string; name: string };
 export default function UsersTable({
 	organizations,
 	showOrganizationSelector = true,
+	isSuperAdmin = false,
 }: {
 	organizations: Org[];
 	showOrganizationSelector?: boolean;
+	isSuperAdmin?: boolean;
 }) {
 	const [selectedOrg, setSelectedOrg] = useState(organizations[0]?.id ?? "");
 	const [activeTab, setActiveTab] = useState<"users" | "invitations">("users");
@@ -211,31 +213,46 @@ export default function UsersTable({
 								<tr><td colSpan={6} className="text-center py-2">Estamos preparando los datos...</td></tr>
 							) : members.length === 0 ? (
 								<tr><td colSpan={6} className="text-center py-2">No members found.</td></tr>
-							) : members.map(member => (
-								<tr key={member.id} className="border-t">
-									<td className="px-2 py-1 border">{member.username}</td>
-									<td className="px-2 py-1 border">{member.email}</td>
-									<td className="px-2 py-1 border">{member.role}</td>
-									<td className="px-2 py-1 border">{member.status ?? <span className="text-slate-400">Unknown</span>}</td>
-									<td className="px-2 py-1 border">{member.lastSignInAt ? new Date(member.lastSignInAt).toLocaleString() : <span className="text-slate-400"></span>}</td>
-									<td className="px-2 py-1 border space-x-2">
-										<button
-											className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded disabled:opacity-50"
-											onClick={() => void handleResetPassword(member)}
-											disabled={resettingUserId === member.id || deletingUserId === member.id}
-										>
-											{resettingUserId === member.id ? 'Enviando...' : 'Restablecer Contrasena'}
-										</button>
-										<button
-											className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded disabled:opacity-50"
-											onClick={() => void handleDeleteUser(member)}
-											disabled={deletingUserId === member.id || resettingUserId === member.id}
-										>
-											{deletingUserId === member.id ? 'Eliminando...' : 'Eliminar'}
-										</button>
-									</td>
-								</tr>
-							))}
+							) : members
+									.filter((member: any) => {
+										// Hide superadmins unless current user is superadmin
+										if (isSuperAdmin) return true;
+										// If member has is_super_admin true, hide
+										// The backend does not return is_super_admin, so we need to add it
+										// If the backend is updated to include is_super_admin, use it here
+										// For now, fallback: if role is 'superadmin' or username/email matches known superadmins, hide
+										// But ideally, backend should include is_super_admin in the member object
+										// If member.is_super_admin is present, use it
+										if ((member as any).is_super_admin === true) return false;
+										// fallback: hide if role is 'superadmin'
+										if ((member.role && member.role.toLowerCase() === 'superadmin')) return false;
+										return true;
+									})
+									.map(member => (
+										<tr key={member.id} className="border-t">
+											<td className="px-2 py-1 border">{member.username}</td>
+											<td className="px-2 py-1 border">{member.email}</td>
+											<td className="px-2 py-1 border">{member.role}</td>
+											<td className="px-2 py-1 border">{member.status ?? <span className="text-slate-400">Unknown</span>}</td>
+											<td className="px-2 py-1 border">{member.lastSignInAt ? new Date(member.lastSignInAt).toLocaleString() : <span className="text-slate-400"></span>}</td>
+											<td className="px-2 py-1 border space-x-2">
+												<button
+													className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded disabled:opacity-50"
+													onClick={() => void handleResetPassword(member)}
+													disabled={resettingUserId === member.id || deletingUserId === member.id}
+												>
+													{resettingUserId === member.id ? 'Enviando...' : 'Restablecer Contrasena'}
+												</button>
+												<button
+													className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded disabled:opacity-50"
+													onClick={() => void handleDeleteUser(member)}
+													disabled={deletingUserId === member.id || resettingUserId === member.id}
+												>
+													{deletingUserId === member.id ? 'Eliminando...' : 'Eliminar'}
+												</button>
+											</td>
+										</tr>
+									))}
 						</tbody>
 					</table>
 

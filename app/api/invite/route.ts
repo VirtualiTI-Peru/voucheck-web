@@ -68,8 +68,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: invitationError.message || "Error al crear invitacion" }, { status: 500 });
     }
 
-    const appUrl = req.nextUrl.origin;
-    const inviteLink = `${appUrl}/accept-invite?token=${encodeURIComponent(rawToken)}`;
+    // Use INVITE_BASE_URL if set, else fallback to request origin
+    const baseUrl = process.env.INVITE_BASE_URL || req.nextUrl.origin;
+    const inviteLink = `${baseUrl}/accept-invite?token=${encodeURIComponent(rawToken)}`;
 
     // Look up org name and caller profile for the email
     const [{ data: org }, { data: callerProfile }] = await Promise.all([
