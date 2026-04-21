@@ -15,7 +15,7 @@ export function AppBreadcrumbs() {
     if (!currentItem) return [];
 
     return [
-      { title: 'Home', href: '/' },
+      { title: 'Inicio', href: '/' },
       { title: currentItem.label, href: currentItem.href }
     ];
   };

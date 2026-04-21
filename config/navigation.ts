@@ -14,21 +14,21 @@ export interface NavItem {
 
 export const navigationItems: NavItem[] = [
   {
-    label: 'Receipts',
+    label: 'Vouchers',
     href: '/receipts',
     icon: IconReceipt,
-    description: 'Manage receipts',
+    description: 'Registro de Vouchers.',
   },
   {
-    label: 'Users',
+    label: 'Usuarios',
     href: '/users',
     icon: IconUsers,
-    description: 'User management',
+    description: 'Gestión de usuarios.',
   },
   {
-    label: 'Configuration',
+    label: 'Configuración',
     href: '/configuration',
     icon: IconSettings,
-    description: 'System settings',
+    description: 'Configuración del sistema',
   },
 ];

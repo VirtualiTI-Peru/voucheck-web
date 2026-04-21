@@ -1,10 +1,9 @@
-import { AppShell, AppShellHeader, AppShellNavbar, AppShellMain } from '@mantine/core'
 import { getPortalContext } from '@/lib/portalContext'
 import { AppNavbar } from '../../components/layout/Navbar'
-import { ClientHeader } from '../../components/layout/ClientHeader'
 import { AppBreadcrumbs } from '../../components/layout/Breadcrumbs'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import DashboardShell from './DashboardShell'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const ctx = await getPortalContext();
@@ -30,25 +29,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
-    <AppShell
-      header={{ height: 60 }}
-      navbar={{ width: 300, breakpoint: 'sm' }}
-      padding="md"
-    >
-      <AppShellHeader>
-        <ClientHeader user={user} />
-      </AppShellHeader>
-
-      <AppShellNavbar>
-        <AppNavbar />
-      </AppShellNavbar>
-
-      <AppShellMain>
-        <div className="p-4">
-          <AppBreadcrumbs />
+    <DashboardShell user={user}>
+      <div className="flex">
+        <div style={{ width: 300 }}>
+          <AppNavbar />
         </div>
-        {children}
-      </AppShellMain>
-    </AppShell>
+        <main style={{ flex: 1 }}>
+          <div className="p-4">
+            <AppBreadcrumbs />
+          </div>
+          {children}
+        </main>
+      </div>
+    </DashboardShell>
   );
 }

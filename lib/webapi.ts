@@ -1,3 +1,4 @@
+
 import { getPortalContext } from './portalContext';
 import type { Receipt, ReceiptPage, ReceiptSummary, Customer } from './api-types';
 
@@ -34,14 +35,7 @@ function getDefaultPageSize(): number {
   return parsed && parsed > 0 ? parsed : 50;
 }
 
-export async function fetchReceipts(customerId: string, options: FetchReceiptsOptions = {}): Promise<Receipt[]> {
-  const page = await fetchReceiptsPage(customerId, {
-    take: 200,
-    forceRefresh: options.forceRefresh,
-  });
 
-  return page.receipts;
-}
 
 export async function fetchReceiptsPage(customerId: string, options: FetchReceiptPageOptions = {}): Promise<ReceiptPage> {
   const normalizedCustomerId = customerId.trim();

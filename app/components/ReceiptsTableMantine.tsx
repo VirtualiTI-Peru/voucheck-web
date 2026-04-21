@@ -11,9 +11,11 @@ import {
   Alert,
   Loader,
   ActionIcon,
+  TextInput,
 } from '@mantine/core';
-import { IconRefresh, IconEye, IconPhoto } from '@tabler/icons-react';
-import type { ReceiptPage } from '@/lib/api-types';
+import { IconRefresh, IconEye, IconPhoto, IconSortAscending, IconSortDescending, IconDownload } from '@tabler/icons-react';
+import type { Receipt, ReceiptPage } from '@/lib/api-types';
+import { fetchReceipts } from '@/lib/webapi-client';
 
 type Org = { id: string; name: string };
 
@@ -22,7 +24,7 @@ type LoadReceiptsOptions = {
 };
 
 const DEFAULT_PAGE_SIZE = Number(process.env.NEXT_PUBLIC_RECEIPTS_PAGE_SIZE) || 50;
-const INVALIDATION_POLL_MS = 15_000;
+const INVALIDATION_POLL_MS = Number(process.env.NEXT_PUBLIC_RECEIPTS_POLL_MS) || 15000;
 
 export default function ReceiptsTable({
   organizations,
@@ -42,6 +44,10 @@ export default function ReceiptsTable({
   const [highlightedRow, setHighlightedRow] = useState<string | null>(null);
   const [imageModal, setImageModal] = useState<string | null>(null);
   const [ocrModal, setOcrModal] = useState<string | null>(null);
+  // Sorting and filtering state
+  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [userFilter, setUserFilter] = useState('');
 
   // Cache and polling refs
   const pageCacheRef = useRef<Record<string, ReceiptPage>>({});
@@ -157,9 +163,10 @@ export default function ReceiptsTable({
   useEffect(() => {
     if (!selectedOrg) return;
 
+
     const intervalId = window.setInterval(async () => {
       try {
-        const response = await fetch(`/api/receipts/summary?orgId=${selectedOrg}`, {
+        const response = await fetch(`/api/receipts/summary?customerId=${selectedOrg}`, {
           cache: 'no-store',
         });
         const data = await response.json().catch(() => null);
@@ -199,13 +206,142 @@ export default function ReceiptsTable({
     void loadReceiptsPage(selectedOrg, currentPage, { forceRefresh: true });
   }
 
-  const receipts = receiptPage.receipts;
+
+  // Sorting handler (must be before return)
+  function handleSort(column: string) {
+    if (sortBy === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortDirection('asc');
+    }
+  }
+
+  // Filtering: single search box for all sortable columns
+  let filteredReceipts = receiptPage.receipts;
+  if (userFilter.trim()) {
+    const q = userFilter.trim().toLowerCase();
+    filteredReceipts = filteredReceipts.filter(r => {
+      return (
+        (r.userName?.toLowerCase().includes(q)) ||
+        (r.transactionSource?.toLowerCase().includes(q)) ||
+        (r.transactionOperationNumber?.toLowerCase().includes(q)) ||
+        (r.transactionAmount && String(r.transactionAmount).toLowerCase().includes(q)) ||
+        (r.createdAt && new Date(r.createdAt).toLocaleString().toLowerCase().includes(q)) ||
+        (r.transactionDateTimeUtc && new Date(r.transactionDateTimeUtc).toLocaleString().toLowerCase().includes(q))
+      );
+    });
+  }
+
+  // Sorting
+  const sorters: Record<string, (a: any, b: any) => number> = {
+    createdAt: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    transactionSource: (a, b) => (a.transactionSource || '').localeCompare(b.transactionSource || ''),
+    transactionAmount: (a, b) => Number(a.transactionAmount || 0) - Number(b.transactionAmount || 0),
+    transactionDateTimeUtc: (a, b) => new Date(a.transactionDateTimeUtc || 0).getTime() - new Date(b.transactionDateTimeUtc || 0).getTime(),
+    transactionOperationNumber: (a, b) => (a.transactionOperationNumber || '').localeCompare(b.transactionOperationNumber || ''),
+    userName: (a, b) => (a.userName || '').localeCompare(b.userName || ''),
+  };
+  let sortedReceipts = [...filteredReceipts];
+  if (sortBy && sorters[sortBy]) {
+    sortedReceipts.sort(sorters[sortBy]);
+    if (sortDirection === 'desc') sortedReceipts.reverse();
+  }
   // Show pagination if we're not on the first page (can go back) or if there are more pages (can go forward)
   const showPagination = currentPage > 1 || receiptPage.hasMore;
 
+
+  // CSV export handler (fetches all data, filters and sorts client-side)
+  async function exportToCsv() {
+    if (!selectedOrg) return;
+    let allReceipts: Receipt[] = [];
+    try {
+      allReceipts = await fetchReceipts(selectedOrg, { forceRefresh: true });
+    } catch {
+      alert('No se pudo obtener todos los vouchers para exportar.');
+      return;
+    }
+    // Apply current filter
+    const q = userFilter.trim().toLowerCase();
+    let filtered = allReceipts;
+    if (q) {
+      filtered = filtered.filter(r =>
+        (r.userName?.toLowerCase().includes(q)) ||
+        (r.transactionSource?.toLowerCase().includes(q)) ||
+        (r.transactionOperationNumber?.toLowerCase().includes(q)) ||
+        (r.transactionAmount && String(r.transactionAmount).toLowerCase().includes(q)) ||
+        (r.createdAt && new Date(r.createdAt).toLocaleString().toLowerCase().includes(q)) ||
+        (r.transactionDateTimeUtc && new Date(r.transactionDateTimeUtc).toLocaleString().toLowerCase().includes(q))
+      );
+    }
+    // Apply current sort
+    const sorters: Record<string, (a: any, b: any) => number> = {
+      createdAt: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      transactionSource: (a, b) => (a.transactionSource || '').localeCompare(b.transactionSource || ''),
+      transactionAmount: (a, b) => Number(a.transactionAmount || 0) - Number(b.transactionAmount || 0),
+      transactionDateTimeUtc: (a, b) => new Date(a.transactionDateTimeUtc || 0).getTime() - new Date(b.transactionDateTimeUtc || 0).getTime(),
+      transactionOperationNumber: (a, b) => (a.transactionOperationNumber || '').localeCompare(b.transactionOperationNumber || ''),
+      userName: (a, b) => (a.userName || '').localeCompare(b.userName || ''),
+    };
+    let sorted = [...filtered];
+    if (sortBy && sorters[sortBy]) {
+      sorted.sort(sorters[sortBy]);
+      if (sortDirection === 'desc') sorted.reverse();
+    }
+    // Only export sortable/filterable columns
+    const headers = [
+      'Fecha de Captura',
+      'Origen',
+      'Importe',
+      'Fecha Operación',
+      'Nº Operación',
+      'Usuario'
+    ];
+    const rows = sorted.map(r => [
+      r.createdAt ? new Date(r.createdAt).toLocaleString() : '',
+      r.transactionSource ?? '',
+      r.transactionAmount ?? '',
+      r.transactionDateTimeUtc ? new Date(r.transactionDateTimeUtc).toLocaleString() : '',
+      r.transactionOperationNumber ?? '',
+      r.userName ?? ''
+    ]);
+    const csv = [headers, ...rows]
+      .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+      .join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'receipts.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
+  }
+
   return (
     <>
-      <Group mb="md" gap="sm">
+      <Group mb="md" gap="sm" align="end">
+        <TextInput
+          label="Buscar en columnas"
+          value={userFilter}
+          onChange={e => setUserFilter(e.currentTarget.value)}
+          placeholder="Buscar por usuario, origen, importe, fecha, operación..."
+          style={{ maxWidth: 320 }}
+        />
+        <ActionIcon
+          variant="light"
+          color="blue"
+          onClick={exportToCsv}
+          title="Exportar CSV"
+          aria-label="Exportar CSV"
+          size="lg"
+          style={{ marginBottom: 4 }}
+        >
+          <IconDownload size={20} />
+        </ActionIcon>
         {showOrganizationSelector && (
           <Select
             data={organizations.map((org) => ({ value: org.id, label: org.name }))}
@@ -248,17 +384,65 @@ export default function ReceiptsTable({
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Voucher</Table.Th>
-            <Table.Th>Fecha de Captura</Table.Th>
-            <Table.Th>Origen</Table.Th>
-            <Table.Th>Importe</Table.Th>
-            <Table.Th>Fecha Operación</Table.Th>
-            <Table.Th>Nº Operación</Table.Th>
-            <Table.Th>Usuario</Table.Th>
+            <Table.Th
+              style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+              onClick={() => handleSort('createdAt')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                Fecha de Captura
+                {sortBy === 'createdAt' && (sortDirection === 'asc' ? <IconSortAscending size={16} style={{marginLeft: 2}} /> : <IconSortDescending size={16} style={{marginLeft: 2}} />)}
+              </span>
+            </Table.Th>
+            <Table.Th
+              style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+              onClick={() => handleSort('transactionSource')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                Origen
+                {sortBy === 'transactionSource' && (sortDirection === 'asc' ? <IconSortAscending size={16} style={{marginLeft: 2}} /> : <IconSortDescending size={16} style={{marginLeft: 2}} />)}
+              </span>
+            </Table.Th>
+            <Table.Th
+              style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+              onClick={() => handleSort('transactionAmount')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                Importe
+                {sortBy === 'transactionAmount' && (sortDirection === 'asc' ? <IconSortAscending size={16} style={{marginLeft: 2}} /> : <IconSortDescending size={16} style={{marginLeft: 2}} />)}
+              </span>
+            </Table.Th>
+            <Table.Th
+              style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+              onClick={() => handleSort('transactionDateTimeUtc')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                Fecha Operación
+                {sortBy === 'transactionDateTimeUtc' && (sortDirection === 'asc' ? <IconSortAscending size={16} style={{marginLeft: 2}} /> : <IconSortDescending size={16} style={{marginLeft: 2}} />)}
+              </span>
+            </Table.Th>
+            <Table.Th
+              style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+              onClick={() => handleSort('transactionOperationNumber')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                Nº Operación
+                {sortBy === 'transactionOperationNumber' && (sortDirection === 'asc' ? <IconSortAscending size={16} style={{marginLeft: 2}} /> : <IconSortDescending size={16} style={{marginLeft: 2}} />)}
+              </span>
+            </Table.Th>
+            <Table.Th
+              style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+              onClick={() => handleSort('userName')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                Usuario
+                {sortBy === 'userName' && (sortDirection === 'asc' ? <IconSortAscending size={16} style={{marginLeft: 2}} /> : <IconSortDescending size={16} style={{marginLeft: 2}} />)}
+              </span>
+            </Table.Th>
             <Table.Th>Texto</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {loading && receipts.length === 0 && (
+          {loading && sortedReceipts.length === 0 && (
             <Table.Tr>
               <Table.Td colSpan={8} ta="center" py="xl">
                 <Group justify="center">
@@ -269,7 +453,7 @@ export default function ReceiptsTable({
             </Table.Tr>
           )}
 
-          {!loading && receipts.length === 0 && !error && (
+          {!loading && sortedReceipts.length === 0 && !error && (
             <Table.Tr>
               <Table.Td colSpan={8} ta="center" py="xl" c="dimmed">
                 No hay vouchers para esta organización.
@@ -277,7 +461,17 @@ export default function ReceiptsTable({
             </Table.Tr>
           )}
 
-          {receipts.map((receipt) => {
+          {sortedReceipts.map((receipt) => {
+
+              // Sorting handler (must be before return)
+              function handleSort(column: string) {
+                if (sortBy === column) {
+                  setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                } else {
+                  setSortBy(column);
+                  setSortDirection('asc');
+                }
+              }
             const isHighlighted = highlightedRow === receipt.receiptId;
             return (
               <Table.Tr

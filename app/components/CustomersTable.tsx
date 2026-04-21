@@ -19,7 +19,7 @@ export default function CustomersTable({
 }) {
 	return (
 		<>
-			<div className="overflow-x-auto rounded border bg-white">
+			<div className="overflow-x-auto rounded border bg-white dark:bg-[#18191A]">
 				<table className="min-w-full text-sm border">
 					<thead className="bg-slate-50 text-left text-slate-600">
 						<tr>

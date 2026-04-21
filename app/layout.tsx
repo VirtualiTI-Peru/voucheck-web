@@ -2,9 +2,8 @@ import type { Metadata } from 'next'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import { MantineProvider } from '@mantine/core'
 import { Geist, Geist_Mono } from 'next/font/google'
-import { theme } from '../lib/theme'
+import ThemeProvider from '../components/ThemeProvider'
 import '@mantine/core/styles.css'
 import './globals.css'
 
@@ -65,9 +64,9 @@ export default async function RootLayout({
       <head>
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <MantineProvider theme={theme} defaultColorScheme="auto">
+        <ThemeProvider>
           {children}
-        </MantineProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

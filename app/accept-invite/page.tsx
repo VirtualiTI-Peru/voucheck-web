@@ -104,7 +104,7 @@ export default function AcceptInvitePage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white dark:bg-[#18191A] p-8 shadow-sm">
         <h1 className="mb-2 text-center text-2xl font-semibold text-slate-800">Completa tu registro</h1>
         <p className="mb-6 text-center text-sm text-slate-500">Configura tu cuenta para ingresar a VouChek.</p>
 

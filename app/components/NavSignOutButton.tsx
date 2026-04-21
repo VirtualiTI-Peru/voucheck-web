@@ -27,7 +27,7 @@ export function NavSignOutButton({ displayName }: NavSignOutButtonProps) {
       )}
       <button
         onClick={handleSignOut}
-        className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        className="rounded border border-slate-300 bg-white dark:bg-[#18191A] px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
       >
         Cerrar sesion
       </button>

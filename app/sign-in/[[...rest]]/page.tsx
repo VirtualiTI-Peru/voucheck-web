@@ -43,7 +43,7 @@ export default function SignInPage() {
 
   return (
     <Center h="100vh" bg="gray.0">
-      <Container size="xs">
+      <Container size="md" style={{ maxWidth: 480, width: '100%' }}>
         <Paper withBorder shadow="md" p="xl" radius="md">
           <Title order={2} ta="center" mb="lg">
             Iniciar sesión

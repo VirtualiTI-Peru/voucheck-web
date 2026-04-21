@@ -197,7 +197,7 @@ export default function UsersTable({
 
 			{activeTab === "users" ? (
 				<>
-					<table className="min-w-full text-sm border bg-white">
+					  <table className="min-w-full text-sm border bg-white dark:bg-[#18191A]">
 						<thead className="bg-slate-50 text-left text-slate-600">
 							<tr>
 								<th className="px-2 py-1 border">Usuario</th>
@@ -274,7 +274,7 @@ export default function UsersTable({
 						/>
 					</div>
 
-					<table className="min-w-full text-sm border bg-white">
+					  <table className="min-w-full text-sm border bg-white dark:bg-[#18191A]">
 						<thead className="bg-slate-50 text-left text-slate-600">
 							<tr>
 								<th className="px-2 py-1 border">Correo</th>
