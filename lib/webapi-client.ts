@@ -8,7 +8,7 @@ export async function fetchReceipts(customerId: string, options: { forceRefresh?
   let hasMore = true;
   while (hasMore) {
     const params = new URLSearchParams({
-      orgId: customerId,
+      customerId,
       page: String(page),
       pageSize: String(pageSize),
     });
