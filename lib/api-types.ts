@@ -29,6 +29,7 @@ export type ReceiptPage = {
   hasMore: boolean;
   lastUpdatedAt: string | null;
   receipts: Receipt[];
+  totalCount: number;
 };
 
 export type ReceiptsList = {

@@ -62,6 +62,7 @@ export default function ReceiptsTable({
       hasMore: false,
       lastUpdatedAt: null,
       receipts: [],
+      totalCount: 0,
     };
   }
 
@@ -132,6 +133,7 @@ export default function ReceiptsTable({
         hasMore: Boolean(data?.hasMore),
         lastUpdatedAt: data?.lastUpdatedAt ?? null,
         receipts: Array.isArray(data?.receipts) ? data.receipts : [],
+        totalCount: Number(data?.totalCount ?? 0),
       } satisfies ReceiptPage;
 
       pageCacheRef.current[cacheKey] = nextPage;
@@ -247,8 +249,9 @@ export default function ReceiptsTable({
     sortedReceipts.sort(sorters[sortBy]);
     if (sortDirection === 'desc') sortedReceipts.reverse();
   }
-  // Show pagination if we're not on the first page (can go back) or if there are more pages (can go forward)
-  const showPagination = currentPage > 1 || receiptPage.hasMore;
+  // Calculate total pages from totalCount and pageSize
+  const totalPages = Math.max(1, Math.ceil((receiptPage.totalCount ?? 0) / receiptPage.pageSize));
+  const showPagination = totalPages > 1;
 
 
   // CSV export handler (fetches all data, filters and sorts client-side)
@@ -536,18 +539,24 @@ export default function ReceiptsTable({
       </Table>
 
       {showPagination && (
-        <Group justify="center" mt="md">
-          <Pagination
-            total={currentPage + (receiptPage.hasMore ? 1 : 0)}
-            value={currentPage}
-            onChange={(page) => {
-              // Only allow navigation to pages we know exist
-              if (page <= currentPage || receiptPage.hasMore) {
-                setCurrentPage(page);
-              }
-            }}
-            disabled={loading}
-          />
+        <Group justify="space-between" align="center" mt="md" style={{ width: '100%' }}>
+          <Text size="sm" c="dimmed" style={{ flex: 1, textAlign: 'left' }}>
+            {(() => {
+              const start = (currentPage - 1) * receiptPage.pageSize + 1;
+              const end = start + receiptPage.receipts.length - 1;
+              const total = receiptPage.totalCount ?? 0;
+              if (total === 0) return 'Sin vouchers';
+              return `${start}–${end} de ${total} vouchers`;
+            })()}
+          </Text>
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+            <Pagination
+              total={totalPages}
+              value={currentPage}
+              onChange={setCurrentPage}
+              disabled={loading}
+            />
+          </div>
         </Group>
       )}
 

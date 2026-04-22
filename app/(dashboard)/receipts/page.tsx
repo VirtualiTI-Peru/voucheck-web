@@ -20,6 +20,7 @@ export default async function ReceiptsPage() {
     hasMore: false,
     lastUpdatedAt: null,
     receipts: [],
+    totalCount: 0,
   };
 
   try {
@@ -57,6 +58,7 @@ export default async function ReceiptsPage() {
         hasMore: false,
         lastUpdatedAt: null,
         receipts: [],
+        totalCount: 0,
       };
     }
   }

@@ -70,27 +70,19 @@ export async function fetchReceiptsPage(customerId: string, options: FetchReceip
   const url = new URL('/api/receipts', getApiBaseUrl());
   url.searchParams.set('customerId', normalizedCustomerId);
   url.searchParams.set('skip', String(skip));
-  url.searchParams.set('take', String(take + 1));
+  url.searchParams.set('take', String(take));
 
-  const pending = apiFetch<Receipt[]>(url)
-    .then((receipts) => {
-      const hasMore = receipts.length > take;
-      const pagedReceipts = hasMore ? receipts.slice(0, take) : receipts;
-      const page = {
-        customerId: normalizedCustomerId,
-        page: Math.floor(skip / take) + 1,
-        pageSize: take,
-        hasMore,
-        lastUpdatedAt: summary.lastUpdatedAt,
-        receipts: pagedReceipts,
-      } satisfies ReceiptPage;
-
+  const pending = apiFetch<ReceiptPage>(url)
+    .then((page) => {
+      // Defensive: ensure receipts is always an array
+      if (!Array.isArray(page.receipts)) page.receipts = [];
+      // Defensive: ensure totalCount is a number
+      if (typeof page.totalCount !== 'number') page.totalCount = 0;
       receiptPagesCache.set(cacheKey, {
         data: page,
         expiresAt: Date.now() + RECEIPTS_CACHE_TTL_MS,
         summaryLastUpdatedAt: summary.lastUpdatedAt,
       });
-
       return page;
     })
     .catch((error) => {
@@ -207,6 +199,7 @@ function buildEmptyReceiptPage(customerId: string, skip: number, take: number, l
     hasMore: false,
     lastUpdatedAt,
     receipts: [],
+    totalCount: 0,
   };
 }
 

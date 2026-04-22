@@ -39,6 +39,7 @@ function buildEmptyPage(customerId: string, page: number): ReceiptPage {
 		hasMore: false,
 		lastUpdatedAt: null,
 		receipts: [],
+		totalCount: 0,
 	};
 }
 
@@ -141,6 +142,7 @@ export default function ReceiptsTable({
 				hasMore: Boolean(data?.hasMore),
 				lastUpdatedAt: data?.lastUpdatedAt ?? null,
 				receipts: Array.isArray(data?.receipts) ? data.receipts : [],
+				totalCount: Number(data?.totalCount ?? 0),
 			} satisfies ReceiptPage;
 
 			pageCacheRef.current[cacheKey] = nextPage;
