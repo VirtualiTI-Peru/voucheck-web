@@ -45,7 +45,7 @@
     "next-env.d.ts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
-  ],
+, "components/layout/Breadcrumbs.tsx", "components/layout/ClientHeader.tsx", "components/layout/Header.tsx", "components/layout/Navbar.tsx"  ],
   "exclude": [
     "node_modules",
     ".next/dev/**/*"

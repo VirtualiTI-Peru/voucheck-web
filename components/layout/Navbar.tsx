@@ -12,10 +12,12 @@ export function AppNavbar() {
     <div style={{ width: 300, padding: 16 }}>
       <Stack gap="xs">
         {navigationItems.map((item) => {
-          const isActive = pathname === item.href ||
-            (item.href === '/' && pathname === '/') ||
-            (item.href !== '/' && pathname.startsWith(item.href));
-
+          let isActive = false;
+          if (item.href === '/dashboard') {
+            isActive = pathname === '/dashboard';
+          } else {
+            isActive = pathname === item.href;
+          }
           return (
             <NavLink
               key={item.href}

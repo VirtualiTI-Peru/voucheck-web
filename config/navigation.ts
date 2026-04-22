@@ -14,6 +14,12 @@ export interface NavItem {
 
 export const navigationItems: NavItem[] = [
   {
+    label: 'Dashboard',
+    href: '/dashboard',
+    icon: IconDashboard,
+    description: 'Resumen general y métricas.',
+  },
+  {
     label: 'Vouchers',
     href: '/receipts',
     icon: IconReceipt,
