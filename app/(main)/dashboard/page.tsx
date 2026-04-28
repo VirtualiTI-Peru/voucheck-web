@@ -4,13 +4,21 @@ import { fetchReceiptsSummaryByDate } from '@/lib/webapi';
 import type { ReceiptsSummaryByDate } from '@/lib/api-types';
 import DashboardSummary from '@/app/components/DashboardSummary';
 
+function getTodayLocalDateString(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
   searchParams: Promise<{ date?: string; timezoneOffsetMinutes?: string }>;
 }) {
   const params = await searchParams;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getTodayLocalDateString();
   const date = params?.date ?? today;
   const timezoneOffsetMinutes = params?.timezoneOffsetMinutes ? Number(params.timezoneOffsetMinutes) : undefined;
 

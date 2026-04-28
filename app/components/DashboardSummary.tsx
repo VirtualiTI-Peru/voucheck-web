@@ -49,8 +49,8 @@ export default function DashboardSummary({ customerId, data, date, initialTimezo
     return new Date(`${value}T00:00:00`).getTimezoneOffset();
   }
 
-  function buildSummaryCacheKey(nextDate: string, timezoneOffsetMinutes: number): string {
-    return `${nextDate}:${timezoneOffsetMinutes}`;
+  function buildSummaryCacheKey(nextCustomerId: string | undefined, nextDate: string, timezoneOffsetMinutes: number): string {
+    return `${nextCustomerId ?? 'none'}:${nextDate}:${timezoneOffsetMinutes}`;
   }
 
   function updateDashboardUrl(nextDate: string, timezoneOffsetMinutes: number, mode: 'push' | 'replace') {
@@ -67,7 +67,7 @@ export default function DashboardSummary({ customerId, data, date, initialTimezo
     updateDashboardUrl(nextDate, timezoneOffsetMinutes, mode);
     setSelectedDate(nextDate);
 
-    const cacheKey = buildSummaryCacheKey(nextDate, timezoneOffsetMinutes);
+    const cacheKey = buildSummaryCacheKey(customerId, nextDate, timezoneOffsetMinutes);
     const cachedSummary = summaryCacheRef.current[cacheKey];
     if (cachedSummary) {
       setSummaryData(cachedSummary);
@@ -95,7 +95,11 @@ export default function DashboardSummary({ customerId, data, date, initialTimezo
       ? initialTimezoneOffsetMinutes
       : getTimezoneOffsetMinutes(date);
 
-    summaryCacheRef.current[buildSummaryCacheKey(date, effectiveTimezoneOffsetMinutes)] = data;
+    if (typeof initialTimezoneOffsetMinutes === 'number') {
+      summaryCacheRef.current[
+        buildSummaryCacheKey(customerId, date, effectiveTimezoneOffsetMinutes)
+      ] = data;
+    }
     setSelectedDate(date);
     setSummaryData(data);
 

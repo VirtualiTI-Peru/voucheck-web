@@ -6,9 +6,17 @@ import { createClient } from '@supabase/supabase-js';
 
 const INITIAL_RECEIPTS_PAGE_SIZE = Number(process.env.NEXT_PUBLIC_RECEIPTS_PAGE_SIZE) || 50;
 
+function getTodayLocalDateString(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function normalizeDate(date?: string): string {
-  if (!date) return new Date().toISOString().slice(0, 10);
-  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : new Date().toISOString().slice(0, 10);
+  if (!date) return getTodayLocalDateString();
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : getTodayLocalDateString();
 }
 
 export default async function ReceiptsPage({

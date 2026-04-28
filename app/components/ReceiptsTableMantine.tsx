@@ -19,6 +19,9 @@ import {
 import { IconRefresh, IconEye, IconPhoto, IconSortAscending, IconSortDescending, IconDownload } from '@tabler/icons-react';
 import type { Receipt, ReceiptPage } from '@/lib/api-types';
 import { fetchReceipts } from '@/lib/webapi-client';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 type Org = { id: string; name: string };
 
@@ -28,6 +31,14 @@ type LoadReceiptsOptions = {
 
 const DEFAULT_PAGE_SIZE = Number(process.env.NEXT_PUBLIC_RECEIPTS_PAGE_SIZE) || 50;
 const INVALIDATION_POLL_MS = Number(process.env.NEXT_PUBLIC_RECEIPTS_POLL_MS) || 15000;
+
+function getTodayLocalDateString(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 const formatCurrencyPen = (amount?: number | null) => {
   if (typeof amount !== 'number' || Number.isNaN(amount)) {
@@ -64,7 +75,7 @@ export default function ReceiptsTable({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getTodayLocalDateString();
   const normalizedInitialDate = initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)
     ? initialDate
     : today;
@@ -95,8 +106,19 @@ export default function ReceiptsTable({
   const [selectedUserName, setSelectedUserName] = useState<string | null>(initialUserName ?? null);
 
   // Cache and polling refs
-  const initialCacheKey = selectedOrg
-    ? buildCacheKey(selectedOrg, 1, normalizedInitialDate, initialTransactionSource ?? null, initialUserId ?? null)
+  const canHydrateInitialCache =
+    !!selectedOrg &&
+    !!initialReceiptsPage &&
+    typeof initialTimezoneOffsetMinutes === 'number';
+  const initialCacheKey = canHydrateInitialCache
+    ? buildCacheKey(
+        selectedOrg,
+        1,
+        normalizedInitialDate,
+        normalizedInitialTimezoneOffsetMinutes,
+        initialTransactionSource ?? null,
+        initialUserId ?? null,
+      )
     : null;
   const pageCacheRef = useRef<Record<string, ReceiptPage>>(
     initialCacheKey && initialReceiptsPage
@@ -136,8 +158,15 @@ export default function ReceiptsTable({
     };
   }
 
-  function buildCacheKey(customerId: string, page: number, date: string, transactionSource: string | null, userId: string | null): string {
-    return `${customerId}:${date}:${transactionSource ?? 'all'}:${userId ?? 'all'}:${page}`;
+  function buildCacheKey(
+    customerId: string,
+    page: number,
+    date: string,
+    timezoneOffsetMinutes: number,
+    transactionSource: string | null,
+    userId: string | null,
+  ): string {
+    return `${customerId}:${date}:${timezoneOffsetMinutes}:${transactionSource ?? 'all'}:${userId ?? 'all'}:${page}`;
   }
 
   function updateUrlParam(key: string, value: string | null) {
@@ -172,7 +201,15 @@ export default function ReceiptsTable({
       return;
     }
 
-    const cacheKey = buildCacheKey(customerId, page, selectedDate, selectedTransactionSource, selectedUserId);
+    const selectedTimezoneOffsetMinutes = getTimezoneOffsetMinutes(selectedDate);
+    const cacheKey = buildCacheKey(
+      customerId,
+      page,
+      selectedDate,
+      selectedTimezoneOffsetMinutes,
+      selectedTransactionSource,
+      selectedUserId,
+    );
     const cachedPage = pageCacheRef.current[cacheKey];
     if (!options.forceRefresh && cachedPage) {
       setReceiptPage(cachedPage);
@@ -192,7 +229,7 @@ export default function ReceiptsTable({
         page: String(page),
         pageSize: String(DEFAULT_PAGE_SIZE),
         date: selectedDate,
-        timezoneOffsetMinutes: String(getTimezoneOffsetMinutes(selectedDate)),
+        timezoneOffsetMinutes: String(selectedTimezoneOffsetMinutes),
       });
 
       if (selectedTransactionSource) {
@@ -375,9 +412,8 @@ export default function ReceiptsTable({
   const showPagination = totalPages > 1;
 
 
-  // CSV export handler (fetches all data, filters and sorts client-side)
-  async function exportToCsv() {
-    if (!selectedOrg) return;
+  async function buildExportData(): Promise<{ headers: string[]; rows: (string | number)[][] } | null> {
+    if (!selectedOrg) return null;
     let allReceipts: Receipt[] = [];
     try {
       allReceipts = await fetchReceipts(selectedOrg, {
@@ -388,9 +424,9 @@ export default function ReceiptsTable({
         userId: selectedUserId ?? undefined,
       });
     } catch {
-      alert('No se pudo obtener todos los vouchers para exportar.');
-      return;
+      return null;
     }
+
     // Apply current filter
     const q = userFilter.trim().toLowerCase();
     let filtered = allReceipts;
@@ -435,20 +471,42 @@ export default function ReceiptsTable({
       r.transactionOperationNumber ?? '',
       r.userName ?? ''
     ]);
-    const csv = [headers, ...rows]
-      .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
-      .join('\r\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'receipts.csv';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 0);
+
+    return { headers, rows };
+  }
+
+  // Excel export handler (fetches all data, filters and sorts client-side)
+  async function exportToExcel() {
+    const exportData = await buildExportData();
+    if (!exportData) {
+      alert('No se pudo obtener todos los vouchers para exportar a Excel.');
+      return;
+    }
+
+    const { headers, rows } = exportData;
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Vouchers');
+    XLSX.writeFile(workbook, 'vouchers.xlsx');
+  }
+
+  async function exportToPdf() {
+    const exportData = await buildExportData();
+    if (!exportData) {
+      alert('No se pudo obtener todos los vouchers para exportar a PDF.');
+      return;
+    }
+
+    const { headers, rows } = exportData;
+    const doc = new jsPDF({ orientation: 'landscape' });
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [39, 110, 241] },
+      margin: { top: 16, right: 10, bottom: 10, left: 10 },
+    });
+    doc.save('vouchers.pdf');
   }
 
   return (
@@ -470,9 +528,20 @@ export default function ReceiptsTable({
         <ActionIcon
           variant="light"
           color="blue"
-          onClick={exportToCsv}
-          title="Exportar CSV"
-          aria-label="Exportar CSV"
+          onClick={exportToExcel}
+          title="Exportar Excel"
+          aria-label="Exportar Excel"
+          size="lg"
+          style={{ marginBottom: 4 }}
+        >
+          <IconDownload size={20} />
+        </ActionIcon>
+        <ActionIcon
+          variant="light"
+          color="red"
+          onClick={exportToPdf}
+          title="Exportar PDF"
+          aria-label="Exportar PDF"
           size="lg"
           style={{ marginBottom: 4 }}
         >
