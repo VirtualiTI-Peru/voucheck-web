@@ -7,7 +7,7 @@ import MainShell from './MainShell'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const ctx = await getPortalContext();
-
+  
   const canSeeAdmin = ctx.isSuperAdmin || ctx.role === 'org:admin';
   const canSeeSuper = ctx.isSuperAdmin;
 
@@ -32,7 +32,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <MainShell user={user}>
       <div className="flex">
         <div style={{ width: 300 }}>
-          <AppNavbar />
+          <AppNavbar canSeeAdmin={canSeeAdmin} canSeeSuper={canSeeSuper} />
         </div>
         <main style={{ flex: 1 }} className="pr-5">
           <div className="p-4">

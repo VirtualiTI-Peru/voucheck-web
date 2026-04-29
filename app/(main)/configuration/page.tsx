@@ -40,7 +40,6 @@ export default function SuperAdminPage() {
     .filter(Boolean);
 
   const isSuperAdmin = !!userEmail && superAdmins.some(e => e.toLowerCase() === userEmail.toLowerCase());
-  const isOrgAdmin = userRole === 'org:admin';
   
   useEffect(() => {
     const supabase = createBrowserClient(
@@ -59,7 +58,7 @@ export default function SuperAdminPage() {
       const res = await fetch('/api/superadmin/organizations', { cache: 'no-store' });
       const data = await res.json().catch(() => []);
       if (!res.ok) {
-        alert(data?.error ?? 'No se pudo cargar organizaciones');
+        
         setOrganizations([]);
         return;
       }
@@ -130,7 +129,7 @@ export default function SuperAdminPage() {
     await loadOrganizations();
   };
 
-  if (!isSuperAdmin && !isOrgAdmin) {
+  if (!isSuperAdmin) {
     return <div>Acceso denegado.</div>;
   }
 

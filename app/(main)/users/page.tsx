@@ -4,8 +4,9 @@ import UsersTable from '@/app/components/UsersTableMantine';
 
 export default async function AdminPage() {
   const ctx = await getPortalContext();
-  if (!ctx.isSuperAdmin && ctx.role !== 'org:admin' && ctx.role !== 'org:sistema') {
-    return <div className="rounded border bg-white dark:bg-[#18191A] p-4">Acceso denegado.</div>;
+  //if (!ctx.isSuperAdmin && ctx.role !== 'org:admin' && ctx.role !== 'org:sistema') {
+  if (!ctx.isSuperAdmin && ctx.role !== 'org:admin') {
+    return <div>Acceso denegado.</div>;
   }
 
   let organizations: { id: string; name: string }[] = [];

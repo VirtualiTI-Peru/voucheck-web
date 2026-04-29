@@ -10,6 +10,8 @@ export interface NavItem {
   href: string;
   icon: any;
   description?: string;
+  /** 'superadmin' = superadmin only; 'admin' = superadmin or org:admin; undefined = everyone */
+  permission?: 'superadmin' | 'admin';
 }
 
 export const navigationItems: NavItem[] = [
@@ -30,11 +32,13 @@ export const navigationItems: NavItem[] = [
     href: '/users',
     icon: IconUsers,
     description: 'Gestión de usuarios.',
+    permission: 'admin',
   },
   {
     label: 'Configuración',
     href: '/configuration',
     icon: IconSettings,
     description: 'Configuración del sistema',
+    permission: 'superadmin',
   },
 ];

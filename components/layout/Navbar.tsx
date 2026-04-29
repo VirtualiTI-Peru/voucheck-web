@@ -4,14 +4,25 @@ import { NavLink, Stack } from '@mantine/core';
 import { usePathname, useRouter } from 'next/navigation';
 import { navigationItems } from '../../config/navigation';
 
-export function AppNavbar() {
+interface AppNavbarProps {
+  canSeeAdmin?: boolean;
+  canSeeSuper?: boolean;
+}
+
+export function AppNavbar({ canSeeAdmin = false, canSeeSuper = false }: AppNavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
+
+  const visibleItems = navigationItems.filter((item) => {
+    if (item.permission === 'superadmin') return canSeeSuper;
+    if (item.permission === 'admin') return canSeeAdmin;
+    return true;
+  });
 
   return (
     <div style={{ width: 300, padding: 16 }}>
       <Stack gap="xs">
-        {navigationItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = pathname === item.href ||
             (item.href === '/' && pathname === '/') ||
             (item.href !== '/' && pathname.startsWith(item.href));
