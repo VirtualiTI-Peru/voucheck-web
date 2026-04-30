@@ -6,6 +6,7 @@ const PUBLIC_ROUTES = [
 	'/sign-up',
 	'/set-password',
 	'/welcome',
+	'/privacy-policy',
 	'/accept-invite',
 	'/api/invitations/resolve',
 	'/api/complete-invite',
