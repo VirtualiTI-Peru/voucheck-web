@@ -651,6 +651,15 @@ export default function ReceiptsTable({
             </Table.Th>
             <Table.Th
               style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+              onClick={() => handleSort('payeeName')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                Pagado a
+                {sortBy === 'payeeName' && (sortDirection === 'asc' ? <IconSortAscending size={16} style={{marginLeft: 2}} /> : <IconSortDescending size={16} style={{marginLeft: 2}} />)}
+              </span>
+            </Table.Th>
+            <Table.Th
+              style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
               onClick={() => handleSort('userName')}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -735,6 +744,7 @@ export default function ReceiptsTable({
                     : ''}
                 </Table.Td>
                 <Table.Td>{receipt.transactionOperationNumber ?? ''}</Table.Td>
+                <Table.Td>{receipt.payeeName ?? ''}</Table.Td>
                 <Table.Td c="dimmed">{receipt.userName}</Table.Td>
                 {isSuperAdmin && (
                   <Table.Td>

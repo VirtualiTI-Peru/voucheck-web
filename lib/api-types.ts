@@ -15,6 +15,7 @@ export type Receipt = {
   blobUrl?: string;
   ocrText?: string;
   userName?: string;
+  payeeName?: string;  
 };
 
 export type ReceiptSummary = {
