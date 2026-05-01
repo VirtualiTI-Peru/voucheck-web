@@ -726,12 +726,12 @@ export default function ReceiptsTable({
                     <Text c="dimmed" size="sm">Sin imagen</Text>
                   )}
                 </Table.Td>
-                <Table.Td>{new Date(receipt.createdAt).toLocaleString()}</Table.Td>
+                <Table.Td>{new Date(receipt.createdAt).toLocaleString('es-PE', { timeZone: 'America/Lima' })}</Table.Td>
                 <Table.Td>{receipt.transactionSource ?? ''}</Table.Td>
                 <Table.Td>{formatCurrencyPen(receipt.transactionAmount)}</Table.Td>
                 <Table.Td>
                   {receipt.transactionDateTimeUtc
-                    ? new Date(receipt.transactionDateTimeUtc).toLocaleString()
+                    ? new Date(receipt.transactionDateTimeUtc).toLocaleString('es-PE', { timeZone: 'America/Lima' })
                     : ''}
                 </Table.Td>
                 <Table.Td>{receipt.transactionOperationNumber ?? ''}</Table.Td>
