@@ -6,6 +6,7 @@ import {
   Badge,
   Table,
   Button,
+  Checkbox,
   Select,
   Modal,
   Text,
@@ -104,6 +105,7 @@ export default function ReceiptsTable({
   const [selectedTransactionSource, setSelectedTransactionSource] = useState<string | null>(initialTransactionSource ?? null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(initialUserId ?? null);
   const [selectedUserName, setSelectedUserName] = useState<string | null>(initialUserName ?? null);
+  const [showDuplicates, setShowDuplicates] = useState(false);
 
   // Cache and polling refs
   const canHydrateInitialCache =
@@ -379,6 +381,10 @@ export default function ReceiptsTable({
 
   // Filtering: single search box for all sortable columns
   let filteredReceipts = receiptPage.receipts;
+  if (!showDuplicates) {
+    filteredReceipts = filteredReceipts.filter((r) => !r.parentReceiptId);
+  }
+
   if (userFilter.trim()) {
     const q = userFilter.trim().toLowerCase();
     filteredReceipts = filteredReceipts.filter(r => {
@@ -429,7 +435,7 @@ export default function ReceiptsTable({
 
     // Apply current filter
     const q = userFilter.trim().toLowerCase();
-    let filtered = allReceipts;
+    let filtered = allReceipts.filter((r) => !r.parentReceiptId);
     if (q) {
       filtered = filtered.filter(r =>
         (r.userName?.toLowerCase().includes(q)) ||
@@ -524,6 +530,12 @@ export default function ReceiptsTable({
           onChange={e => setUserFilter(e.currentTarget.value)}
           placeholder="Buscar por usuario, origen, importe, fecha, operación..."
           style={{ maxWidth: 320 }}
+        />
+        <Checkbox
+          label="Mostrar duplicados"
+          checked={showDuplicates}
+          onChange={(event) => setShowDuplicates(event.currentTarget.checked)}
+          mb={6}
         />
         <ActionIcon
           variant="light"
