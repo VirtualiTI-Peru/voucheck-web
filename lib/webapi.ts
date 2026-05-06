@@ -116,6 +116,8 @@ export async function fetchReceiptsPage(customerId: string, options: FetchReceip
       if (!Array.isArray(page.receipts)) page.receipts = [];
       // Defensive: ensure totalCount is a number
       if (typeof page.totalCount !== 'number') page.totalCount = 0;
+      // Backend list endpoint may omit lastUpdatedAt; keep UI label in sync using summary.
+      page.lastUpdatedAt = page.lastUpdatedAt ?? summary.lastUpdatedAt;
       receiptPagesCache.set(cacheKey, {
         data: page,
         expiresAt: Date.now() + RECEIPTS_CACHE_TTL_MS,

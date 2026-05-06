@@ -181,7 +181,7 @@ export default function ReceiptsTable({
 
   function formatLastUpdated(lastUpdatedAt: string | null): string {
     if (!lastUpdatedAt) {
-      return 'Nunca';
+      return 'Sin datos aún';
     }
     return new Date(lastUpdatedAt).toLocaleString();
   }
@@ -702,10 +702,14 @@ export default function ReceiptsTable({
                 }
               }
             const isHighlighted = highlightedRow === receipt.receiptId;
+            const isDuplicateReceipt = Boolean(receipt.parentReceiptId);
+            const rowBackground = isDuplicateReceipt
+              ? (isHighlighted ? 'red.1' : 'red.0')
+              : (isHighlighted ? 'yellow.1' : undefined);
             return (
               <Table.Tr
                 key={`${receipt.userId}:${receipt.receiptId}`}
-                bg={isHighlighted ? 'yellow.1' : undefined}
+                bg={rowBackground}
                 onClick={() => setHighlightedRow(receipt.receiptId)}
                 style={{ cursor: 'pointer' }}
               >
@@ -733,6 +737,11 @@ export default function ReceiptsTable({
                     />
                   ) : (
                     <Text c="dimmed" size="sm">Sin imagen</Text>
+                  )}
+                  {isDuplicateReceipt && (
+                    <Badge color="red" variant="light" size="xs" mt={6}>
+                      Duplicado
+                    </Badge>
                   )}
                 </Table.Td>
                 <Table.Td>{new Date(receipt.createdAt).toLocaleString('es-PE', { timeZone: 'America/Lima' })}</Table.Td>

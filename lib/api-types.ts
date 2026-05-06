@@ -3,6 +3,7 @@
 export type Receipt = {
   userId: string;
   receiptId: string;
+  parentReceiptId?: string | null;
   customerId?: string;
   createdAt: string;
   updatedAt?: string;
