@@ -34,6 +34,7 @@ Required:
 Optional:
 
 - `INVITE_BASE_URL`: base URL used in invitation flows
+- `INVITE_BASE_URL`: base URL used in invitation flows and password-recovery emails
 - `RESEND_API_KEY`: required only if this web app is responsible for sending invite emails directly
 - `RESEND_SENDER_EMAIL`: sender address used for invitation and welcome emails when email sending is enabled
 - `RECEIPTS_CACHE_TTL_SECONDS`: server-side receipts page cache TTL in seconds, default `30`

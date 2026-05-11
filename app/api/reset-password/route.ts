@@ -90,6 +90,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'User email not found' }, { status: 400 });
     }
 
+    // Keep recovery links on a stable app host in UAT instead of deriving it from the request origin.
+    const recoveryBaseUrl = process.env.INVITE_BASE_URL || req.nextUrl.origin;
+
     const [
       { data: org },
       { data: profile },
@@ -101,7 +104,7 @@ export async function POST(req: NextRequest) {
         type: 'recovery',
         email: targetUser.email,
         options: {
-          redirectTo: `${req.nextUrl.origin}/set-password`,
+          redirectTo: `${recoveryBaseUrl}/set-password`,
         },
       }),
     ]);

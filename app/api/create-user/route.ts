@@ -50,12 +50,15 @@ export async function POST(req: NextRequest) {
       console.warn('organization_members insert skipped during create-user:', membershipError);
     }
 
+    // Keep recovery links on a stable app host in UAT instead of deriving it from the request origin.
+    const recoveryBaseUrl = process.env.INVITE_BASE_URL || req.nextUrl.origin;
+
     // Generate password-reset link so user can set their own password
     const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
       email,
       options: {
-        redirectTo: `${req.nextUrl.origin}/set-password`,
+        redirectTo: `${recoveryBaseUrl}/set-password`,
       },
     });
 
