@@ -66,10 +66,15 @@ export async function POST(req: NextRequest) {
     const { data: org } = await supabaseAdmin.from('organizations').select('name').eq('id', orgId).single();
     const orgName = org?.name ?? orgId;
 
-    if (linkData?.properties?.action_link) {
+    const hashedToken = linkData?.properties?.hashed_token;
+    const setupLink = hashedToken
+      ? `${recoveryBaseUrl}/set-password?type=recovery&token_hash=${encodeURIComponent(hashedToken)}`
+      : linkData?.properties?.action_link;
+
+    if (setupLink) {
       const welcomeResult = await sendWelcomeEmail({
         to: email,
-        setupLink: linkData.properties.action_link,
+        setupLink,
         orgName,
         firstName,
       });

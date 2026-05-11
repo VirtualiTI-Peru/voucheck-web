@@ -65,6 +65,11 @@ export default function SetPasswordPage() {
       const accessToken = hashParams.get('access_token')
       const refreshToken = hashParams.get('refresh_token')
       const code = searchParams.get('code')
+      const tokenHash =
+        searchParams.get('token_hash') ||
+        hashParams.get('token_hash') ||
+        searchParams.get('token') ||
+        hashParams.get('token')
 
       const {
         data: { subscription },
@@ -111,6 +116,27 @@ export default function SetPasswordPage() {
         }
 
         if (exchangeError || !data.session) {
+          setReady(false)
+          setInitializing(false)
+          setError('El enlace para configurar la contrasena no es valido o ya expiro. Solicita uno nuevo.')
+          return
+        }
+
+        markReady(data.session.user?.email)
+        return
+      }
+
+      if (expectsRecovery && tokenHash) {
+        const { data, error: verifyError } = await supabase.auth.verifyOtp({
+          type: 'recovery',
+          token_hash: tokenHash,
+        })
+
+        if (!mounted) {
+          return
+        }
+
+        if (verifyError || !data.session) {
           setReady(false)
           setInitializing(false)
           setError('El enlace para configurar la contrasena no es valido o ya expiro. Solicita uno nuevo.')

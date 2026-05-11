@@ -109,13 +109,18 @@ export async function POST(req: NextRequest) {
       }),
     ]);
 
-    if (linkError || !linkData?.properties?.action_link) {
+    const hashedToken = linkData?.properties?.hashed_token;
+    const setupLink = hashedToken
+      ? `${recoveryBaseUrl}/set-password?type=recovery&token_hash=${encodeURIComponent(hashedToken)}`
+      : linkData?.properties?.action_link;
+
+    if (linkError || !setupLink) {
       return NextResponse.json({ error: linkError?.message || 'Failed to generate password setup link' }, { status: 500 });
     }
 
     const emailResult = await sendWelcomeEmail({
       to: targetUser.email,
-      setupLink: linkData.properties.action_link,
+      setupLink,
       orgName: org?.name ?? orgId,
       firstName: profile?.first_name ?? 'Usuario',
     });
