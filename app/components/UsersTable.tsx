@@ -405,7 +405,7 @@ function InviteForm({ orgId, members, onInvited }: InviteFormProps) {
 				disabled={loading || !email || !orgId}
 				type="button"
 			>
-				{loading ? "Enviando..." : "Invitar"}
+									{loading ? "Enviando..." : "Invitar"}
 			</button>
 			{message && <span className="ml-2 text-xs text-slate-600">{message}</span>}
 		</div>

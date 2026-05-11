@@ -34,6 +34,87 @@ type Invitation = {
 
 type Org = { id: string; name: string };
 
+type InviteFormProps = {
+  orgId: string;
+  members: Member[];
+  onInvited: () => void;
+};
+
+function InviteForm({ orgId, members, onInvited }: InviteFormProps) {
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('org:transportista');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const availableRoles = [
+    { value: 'org:transportista', label: 'Transportista' },
+    { value: 'org:sistema', label: 'Administrador del Sistema' },
+    { value: 'org:verificador', label: 'Verificador' },
+  ];
+
+  const handleInvite = async () => {
+    setMessage('');
+    if (!email || !orgId) return;
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const exists = members.some((member) => (member.email ?? '').toLowerCase() === normalizedEmail);
+    if (exists) {
+      setMessage('El usuario ya existe en la organización.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail, orgId, role }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setMessage('Invitación enviada.');
+        setEmail('');
+        onInvited();
+      } else {
+        setMessage(data?.error || 'Error al enviar la invitación');
+      }
+    } catch {
+      setMessage('Error al enviar la invitación');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Group align="end" wrap="wrap" gap="sm">
+      <input
+        type="email"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        disabled={loading}
+        placeholder="Correo electrónico"
+        className="border rounded px-3 py-2 min-w-[240px]"
+      />
+      <select
+        value={role}
+        onChange={(event) => setRole(event.target.value)}
+        disabled={loading}
+        className="border rounded px-3 py-2"
+      >
+        {availableRoles.map((availableRole) => (
+          <option key={availableRole.value} value={availableRole.value}>
+            {availableRole.label}
+          </option>
+        ))}
+      </select>
+      <Button onClick={() => void handleInvite()} disabled={loading || !email || !orgId}>
+        {loading ? 'Enviando...' : 'Enviar invitación'}
+      </Button>
+      {message && <Text size="sm" c="dimmed">{message}</Text>}
+    </Group>
+  );
+}
+
 export default function UsersTable({
   organizations,
   showOrganizationSelector = true,
@@ -113,7 +194,7 @@ export default function UsersTable({
       const res = await fetch('/api/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: member.id }),
+        body: JSON.stringify({ userId: member.id, orgId: selectedOrg }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -206,6 +287,15 @@ export default function UsersTable({
         </Tabs.List>
 
         <Tabs.Panel value="users" pt="md">
+          <Alert color="gray" mb="md">
+            <Text fw={600} mb={4}>Invitar usuario</Text>
+            <InviteForm
+              orgId={selectedOrg}
+              members={members}
+              onInvited={() => selectedOrg && void loadInvitations(selectedOrg)}
+            />
+          </Alert>
+
           <Table striped highlightOnHover withTableBorder>
             <Table.Thead>
               <Table.Tr>
