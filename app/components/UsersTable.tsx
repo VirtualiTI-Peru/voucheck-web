@@ -241,7 +241,7 @@ export default function UsersTable({
 													onClick={() => void handleResetPassword(member)}
 													disabled={resettingUserId === member.id || deletingUserId === member.id}
 												>
-													{resettingUserId === member.id ? 'Enviando...' : 'Restablecer Contrasena'}
+													{resettingUserId === member.id ? 'Enviando...' : 'Restablecer Contraseña'}
 												</button>
 												<button
 													className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded disabled:opacity-50"

@@ -100,7 +100,7 @@ export default function SetPasswordPage() {
         if (sessionError || !data.session) {
           setReady(false)
           setInitializing(false)
-          setError('El enlace para configurar la contrasena no es valido o ya expiro. Solicita uno nuevo.')
+          setError('El enlace para configurar la contraseña no es valido o ya expiro. Solicita uno nuevo.')
           return
         }
 
@@ -118,7 +118,7 @@ export default function SetPasswordPage() {
         if (exchangeError || !data.session) {
           setReady(false)
           setInitializing(false)
-          setError('El enlace para configurar la contrasena no es valido o ya expiro. Solicita uno nuevo.')
+          setError('El enlace para configurar la contraseña no es valido o ya expiro. Solicita uno nuevo.')
           return
         }
 
@@ -139,7 +139,7 @@ export default function SetPasswordPage() {
         if (verifyError || !data.session) {
           setReady(false)
           setInitializing(false)
-          setError('El enlace para configurar la contrasena no es valido o ya expiro. Solicita uno nuevo.')
+          setError('El enlace para configurar la contraseña no es valido o ya expiro. Solicita uno nuevo.')
           return
         }
 
@@ -162,8 +162,8 @@ export default function SetPasswordPage() {
         setInitializing(false)
         setError(
           expectsRecovery
-            ? 'El enlace para configurar la contrasena no es valido o ya expiro. Solicita uno nuevo.'
-            : 'No se encontro una solicitud valida para configurar contrasena.'
+            ? 'El enlace para configurar la contraseña no es valido o ya expiro. Solicita uno nuevo.'
+            : 'No se encontro una solicitud valida para configurar contraseña.'
         )
       }
 
@@ -182,12 +182,12 @@ export default function SetPasswordPage() {
     setError(null)
 
     if (!password || password.length < 6) {
-      setError('La contrasena debe tener al menos 6 caracteres.')
+      setError('La contraseña debe tener al menos 6 caracteres.')
       return
     }
 
     if (password !== confirmPassword) {
-      setError('Las contrasenas no coinciden.')
+      setError('Las contraseñas no coinciden.')
       return
     }
 
@@ -209,9 +209,9 @@ export default function SetPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white dark:bg-[#18191A] p-8 shadow-sm">
-        <h1 className="mb-2 text-center text-2xl font-semibold text-slate-800">Configurar contrasena</h1>
+        <h1 className="mb-2 text-center text-2xl font-semibold text-slate-800">Configurar contraseña</h1>
         <p className="mb-6 text-center text-sm text-slate-500">
-          Define tu contrasena para completar el acceso a VouChek.
+          Define tu contraseña para completar el acceso a VouChek.
         </p>
 
         {initializing ? (
@@ -232,7 +232,7 @@ export default function SetPasswordPage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Nueva contrasena</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Nueva contraseña</label>
               <input
                 type="password"
                 name="newPassword"
@@ -246,7 +246,7 @@ export default function SetPasswordPage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Confirmar contrasena</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Confirmar contraseña</label>
               <input
                 type="password"
                 name="confirmPassword"
@@ -266,7 +266,7 @@ export default function SetPasswordPage() {
               disabled={loading}
               className="w-full rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading ? 'Guardando...' : 'Guardar contrasena'}
+              {loading ? 'Guardando...' : 'Guardar contraseña'}
             </button>
           </form>
         )}

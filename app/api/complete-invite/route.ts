@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing token, firstName, lastName or password' }, { status: 400 });
     }
     if (String(password).length < 6) {
-      return NextResponse.json({ error: 'La contrasena debe tener al menos 6 caracteres.' }, { status: 400 });
+      return NextResponse.json({ error: 'La contraseña debe tener al menos 6 caracteres.' }, { status: 400 });
     }
 
     const supabaseAdmin = createClient(

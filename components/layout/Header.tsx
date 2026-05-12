@@ -12,9 +12,10 @@ interface HeaderProps {
     };
   } | null;
   onSignOut?: () => void;
+  onProfileClick?: () => void;
 }
 
-export function Header({ user, onSignOut }: HeaderProps) {
+export function Header({ user, onSignOut, onProfileClick }: HeaderProps) {
   const displayName = user?.user_metadata?.full_name || user?.email || 'User';
 
   return (
@@ -42,7 +43,7 @@ export function Header({ user, onSignOut }: HeaderProps) {
           </Menu.Target>
 
           <Menu.Dropdown>
-            <Menu.Item leftSection={<IconUser size={16} />}>
+            <Menu.Item leftSection={<IconUser size={16} />} onClick={onProfileClick}>
               Profile
             </Menu.Item>
             <Menu.Divider />

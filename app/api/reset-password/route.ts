@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
-import { sendWelcomeEmail } from '@/lib/sendInviteEmail';
+import { sendPasswordResetEmail } from '@/lib/sendInviteEmail';
 
 async function getAuthContext(req: NextRequest) {
   const supabase = createServerClient(
@@ -118,9 +118,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: linkError?.message || 'Failed to generate password setup link' }, { status: 500 });
     }
 
-    const emailResult = await sendWelcomeEmail({
+    const emailResult = await sendPasswordResetEmail({
       to: targetUser.email,
-      setupLink,
+      changePasswordLink: setupLink,
       orgName: org?.name ?? orgId,
       firstName: profile?.first_name ?? 'Usuario',
     });

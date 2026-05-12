@@ -71,11 +71,11 @@ export default function AcceptInvitePage() {
       return
     }
     if (!password || password.length < 6) {
-      setError('La contrasena debe tener al menos 6 caracteres.')
+      setError('La Contraseña debe tener al menos 6 caracteres.')
       return
     }
     if (password !== confirmPassword) {
-      setError('Las contrasenas no coinciden.')
+      setError('Las Contraseñas no coinciden.')
       return
     }
     if (!token) {
@@ -152,7 +152,7 @@ export default function AcceptInvitePage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Contrasena</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Contraseña</label>
               <input
                 type="password"
                 name="newPassword"
@@ -166,7 +166,7 @@ export default function AcceptInvitePage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Confirmar contrasena</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Confirmar Contraseña</label>
               <input
                 type="password"
                 name="confirmPassword"
