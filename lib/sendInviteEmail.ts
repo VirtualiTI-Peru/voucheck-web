@@ -207,7 +207,7 @@ export async function sendWelcomeEmail({ to, setupLink, loginLink, orgName, firs
       loginLink: resolvedLoginLink,
       changePasswordLink: setupLink,
       actionMessage: isSetupFlow
-        ? 'Tu cuenta fue creada correctamente. Puedes iniciar sesion con la contraseña temporal y, si lo prefieres, cambiarla con el boton Cambiar contraseña.'
+        ? 'Tu cuenta fue creada correctamente. Puedes iniciar sesion con la contraseña asignada y, si lo prefieres, cambiarla con el boton Cambiar contraseña.'
         : 'Tu cuenta fue creada correctamente y ya puedes ingresar a la plataforma.',
       footerMessage: isSetupFlow
         ? 'El enlace Cambiar contraseña expira en 24 horas.'
