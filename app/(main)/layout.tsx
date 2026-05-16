@@ -6,10 +6,11 @@ import { cookies } from 'next/headers'
 import MainShell from './MainShell'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const ctx = await getPortalContext();
-  
-  const canSeeAdmin = ctx.isSuperAdmin || ctx.role === 'org:admin';
-  const canSeeSuper = ctx.isSuperAdmin;
+  try {
+    await getPortalContext();
+  } catch {
+    return <div className="rounded border bg-white p-4 m-4">Acceso denegado.</div>;
+  }
 
   // Get user data for header
   const cookieStore = await cookies();
@@ -32,7 +33,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <MainShell user={user}>
       <div className="flex">
         <div style={{ width: 300 }}>
-          <AppNavbar canSeeAdmin={canSeeAdmin} canSeeSuper={canSeeSuper} />
+          <AppNavbar canSeeAdmin={false} canSeeSuper={false} />
         </div>
         <main style={{ flex: 1 }} className="pr-5">
           <div className="p-4">

@@ -1,12 +1,25 @@
 import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
-export type PortalRole = 'org:verificador' | 'org:admin' | string;
+export type PortalRole = string;
+
+type VirtualitiCustomer = {
+  customer_id: string;
+  customer_name?: string;
+  role?: string;
+};
+
+type PortalCustomer = {
+  id: string;
+  name: string;
+  role?: string;
+};
 
 export type PortalContext = {
   userId: string;
   orgId: string;
+  customers: PortalCustomer[];
+  allowedCustomerIds: string[];
   email?: string;
   role?: PortalRole;
   isSuperAdmin: boolean;
@@ -34,34 +47,51 @@ export async function getPortalContext(): Promise<PortalContext> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) throw new Error('Missing auth token');
 
-  const appMeta = user.app_metadata ?? {};
-  const email = user.email;
-  const orgId = (appMeta.org_id as string | undefined) ?? '';
-  const role = (appMeta.role as string | undefined) as PortalRole | undefined;
-
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('first_name, last_name, is_super_admin')
-    .eq('user_id', user.id)
-    .single();
-
-  const firstName = profile?.first_name ?? '';
-  const lastName = profile?.last_name ?? '';
-  const fullName = `${firstName} ${lastName}`.trim() || undefined;
-  const isSuperAdmin = profile?.is_super_admin === true;
-
-  if (!orgId && !isSuperAdmin) {
-    throw new Error('Missing org_id claim');
+  const appId = process.env.NEXT_PUBLIC_VIRTUALITI_APP_ID;
+  if (!appId) {
+    throw new Error('Missing NEXT_PUBLIC_VIRTUALITI_APP_ID configuration.');
   }
+
+  const userMeta = (user.user_metadata ?? {}) as {
+    virtualiti?: {
+      full_name?: string;
+      is_super_admin?: boolean;
+      applications?: Array<{
+        application_id?: string;
+        customers?: VirtualitiCustomer[];
+      }>;
+    };
+  };
+
+  const applications = userMeta.virtualiti?.applications ?? [];
+  const appAccess = applications.find((app) => app.application_id === appId);
+  const isSuperAdmin = userMeta.virtualiti?.is_super_admin === true;
+
+  if (!appAccess && !isSuperAdmin) {
+    throw new Error('No access to VouChek application.');
+  }
+
+  const customers: PortalCustomer[] = (appAccess?.customers ?? [])
+    .filter((customer): customer is VirtualitiCustomer => Boolean(customer?.customer_id))
+    .map((customer) => ({
+      id: customer.customer_id,
+      name: customer.customer_name?.trim() || customer.customer_id,
+      role: customer.role,
+    }));
+
+  const allowedCustomerIds = customers.map((customer) => customer.id);
+  const primaryCustomer = customers[0];
+
+  const email = user.email;
+  const fullName = userMeta.virtualiti?.full_name || undefined;
+  const orgId = primaryCustomer?.id ?? '';
+  const role = primaryCustomer?.role;
 
   return {
     userId: user.id,
     orgId,
+    customers,
+    allowedCustomerIds,
     email,
     role,
     isSuperAdmin,

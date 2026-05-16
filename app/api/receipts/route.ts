@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Missing customerId' }, { status: 400 });
     }
 
-    if (!ctx.isSuperAdmin && ctx.orgId !== customerId) {
+    if (!ctx.isSuperAdmin && !ctx.allowedCustomerIds.includes(customerId)) {
       return NextResponse.json({ error: 'Forbidden for this organization' }, { status: 403 });
     }
 
@@ -44,6 +44,15 @@ export async function GET(req: NextRequest) {
       pageSize,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to fetch receipts' }, { status: 500 });
+    const message = String(error?.message || 'Failed to fetch receipts');
+    if (message.includes('Not authenticated')) {
+      return NextResponse.json({ error: message }, { status: 401 });
+    }
+
+    if (message.includes('No access to VouChek')) {
+      return NextResponse.json({ error: message }, { status: 403 });
+    }
+
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

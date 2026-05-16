@@ -22,13 +22,20 @@ export default async function DashboardPage({
   const date = params?.date ?? today;
   const timezoneOffsetMinutes = params?.timezoneOffsetMinutes ? Number(params.timezoneOffsetMinutes) : undefined;
 
-  const ctx = await getPortalContext();
+  let ctx;
+  try {
+    ctx = await getPortalContext();
+  } catch {
+    return <div className="rounded border bg-white p-4">Acceso denegado.</div>;
+  }
+
+  const selectedCustomerId = ctx.customers[0]?.id ?? '';
 
   let data: ReceiptsSummaryByDate | null = null;
-  if (ctx.orgId) {
+  if (selectedCustomerId) {
     try {
       data = await fetchReceiptsSummaryByDate(
-        ctx.orgId,
+        selectedCustomerId,
         date,
         Number.isFinite(timezoneOffsetMinutes) ? timezoneOffsetMinutes : undefined,
       );
@@ -41,7 +48,7 @@ export default async function DashboardPage({
     <>
       <Title order={2} mb="md">Dashboard</Title>
       <DashboardSummary
-        customerId={ctx.orgId}
+        customerId={selectedCustomerId}
         data={data}
         date={date}
         initialTimezoneOffsetMinutes={Number.isFinite(timezoneOffsetMinutes) ? timezoneOffsetMinutes : undefined}

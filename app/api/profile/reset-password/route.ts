@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
-import { sendPasswordResetEmail } from '@/lib/sendInviteEmail';
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,63 +28,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'User email not found' }, { status: 400 });
     }
 
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-    const recoveryBaseUrl = process.env.INVITE_BASE_URL || req.nextUrl.origin;
+    if (!session?.access_token) {
+      return NextResponse.json({ error: 'Missing auth token' }, { status: 401 });
+    }
 
-    const [
-      { data: profile },
-      { data: orgMembership },
-      { data: linkData, error: linkError },
-    ] = await Promise.all([
-      supabaseAdmin.from('profiles').select('first_name').eq('user_id', user.id).single(),
-      supabaseAdmin
-        .from('organization_members')
-        .select('org_id, organizations(name)')
-        .eq('user_id', user.id)
-        .limit(1)
-        .single(),
-      supabaseAdmin.auth.admin.generateLink({
-        type: 'recovery',
-        email: user.email,
-        options: {
-          redirectTo: `${recoveryBaseUrl}/set-password`,
-        },
+    const universalAuthApiBaseUrl = process.env.UNIVERSALAUTH_API_BASE_URL;
+    if (!universalAuthApiBaseUrl) {
+      return NextResponse.json({ error: 'Missing UNIVERSALAUTH_API_BASE_URL configuration' }, { status: 500 });
+    }
+
+    const response = await fetch(`${universalAuthApiBaseUrl.replace(/\/$/, '')}/api/auth/password-reset/request`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        redirectBaseUrl: req.nextUrl.origin,
+        applicationName: 'VouChek',
       }),
-    ]);
-
-    if (linkError || !linkData) {
-      return NextResponse.json(
-        { error: linkError?.message || 'Failed to generate password reset link' },
-        { status: 500 }
-      );
-    }
-
-    const hashedToken = linkData?.properties?.hashed_token;
-    const setupLink = hashedToken
-      ? `${recoveryBaseUrl}/set-password?type=recovery&token_hash=${encodeURIComponent(hashedToken)}`
-      : linkData?.properties?.action_link;
-
-    if (!setupLink) {
-      return NextResponse.json({ error: 'Failed to generate password reset link' }, { status: 500 });
-    }
-
-    const orgName =
-      (orgMembership as any)?.organizations?.name ??
-      String(user.app_metadata?.org_id ?? 'VouChek');
-
-    const emailResult = await sendPasswordResetEmail({
-      to: user.email,
-      changePasswordLink: setupLink,
-      firstName: profile?.first_name ?? 'Usuario',
-      orgName,
     });
 
-    if (emailResult.error) {
-      return NextResponse.json({ error: 'Failed to send password reset email' }, { status: 500 });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: data?.message || data?.error || 'Failed to request password reset' },
+        { status: response.status }
+      );
     }
 
     return NextResponse.json({ success: true });

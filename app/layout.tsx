@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { createServerClient } from '@supabase/ssr'
-import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { Geist, Geist_Mono } from 'next/font/google'
 import ThemeProvider from '../components/ThemeProvider'
@@ -43,22 +42,6 @@ export default async function RootLayout({
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-  const email = user?.email
-
-  let displayName: string | undefined = email
-  if (user) {
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('first_name, last_name')
-      .eq('user_id', user.id)
-      .single()
-    const fullName = `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim()
-    if (fullName) displayName = fullName
-  }
 
   return (
     <html lang="es">
